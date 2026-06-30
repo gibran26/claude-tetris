@@ -17,6 +17,24 @@ body {
 
 .wrapper {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.game-title {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: 12px;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, #f7768e, #ff9e64, #e0af68, #9ece6a, #73daca, #7aa2f7, #bb9af7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  user-select: none;
 }
 
 .game-container {
