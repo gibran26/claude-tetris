@@ -1,0 +1,109 @@
+name: Claude Issue Triage
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  triage:
+    # Excluir issues que mencionan @claude (los maneja claude.yml)
+    # Excluir actores bot para evitar bucles
+    if: |
+      !contains(github.event.issue.body, '@claude') &&
+      !contains(github.event.issue.title, '@claude') &&
+      !endsWith(github.actor, '[bot]')
+
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Run Claude Issue Triage
+        id: claude-triage
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+
+          claude_args: >-
+            --allowed-tools
+            Bash(gh label list:*),Bash(gh label create:*),Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*)
+
+          prompt: |
+            Eres un asistente de triaje automático de issues para el repositorio de un juego de Tetris.
+            El repositorio tiene tres archivos principales:
+            - game.js (~300 líneas): toda la lógica del juego (board, piezas, rotación, colisiones, puntuación, bucle de juego).
+            - index.html: estructura DOM (dos canvas: tablero 300×600 y preview 120×120, panel lateral, overlay de PAUSA/GAME OVER).
+            - style.css: tema oscuro/retro, sin lógica.
+
+            Se ha creado o editado el issue #${{ github.event.issue.number }} en el repositorio ${{ github.repository }}.
+            El evento que disparó este análisis fue: ${{ github.event_name }} (${{ github.event.action }}).
+
+            Sigue estos pasos en orden:
+
+            1. Lee el issue completo:
+               gh issue view ${{ github.event.issue.number }} --json title,body,labels,state
+
+            2. Consulta los labels disponibles en el repositorio:
+               gh label list
+
+            3. Asigna los labels apropiados al issue con:
+               gh issue edit ${{ github.event.issue.number }} --add-label "LABEL1,LABEL2"
+               - Prefiere siempre los labels existentes antes de crear nuevos.
+               - Si ningún label existente describe bien el issue, crea los que necesites:
+                 gh label create "NOMBRE" --color "HEXCOLOR" --description "DESCRIPCION"
+                 Ejemplos de labels nuevos útiles: "prioridad:alta" (#e11d48), "prioridad:media" (#f97316),
+                 "prioridad:baja" (#84cc16), "area:gameplay" (#8b5cf6), "area:render" (#0ea5e9),
+                 "area:ui" (#06b6d4), "area:audio" (#ec4899).
+               - IMPORTANTE: NO edites el título ni el cuerpo del issue (para evitar bucles de re-ejecución).
+
+            4. Publica un comentario de diagnóstico NUEVO en el issue (siempre crea uno nuevo para mantener
+               el historial completo). El comentario debe seguir exactamente esta estructura en español:
+
+               gh issue comment ${{ github.event.issue.number }} --body "CUERPO_DEL_COMENTARIO"
+
+               El cuerpo del comentario debe ser:
+
+               <!-- claude-issue-diagnosis -->
+               🔎 **Diagnóstico automático de Claude** — disparado por `${{ github.event.action }}`
+
+               ---
+
+               ### 📋 Resumen
+               [Breve descripción del problema o solicitud en 1-2 oraciones]
+
+               ### 🏷️ Tipo
+               [bug / mejora / nueva funcionalidad / duda / documentación]
+
+               ### ⚡ Severidad / Prioridad sugerida
+               [alta / media / baja] — [justificación en 1 oración]
+
+               ### 📁 Área del código afectada
+               | Archivo | Sección / Función | Relevancia |
+               |---------|-------------------|------------|
+               [Listar los archivos probables: game.js, index.html o style.css con la sección específica]
+
+               ### 🔍 Causa raíz probable
+               [Si es un bug: explicar qué parte del código probablemente lo causa y por qué.
+                Si es una mejora/nueva funcionalidad: describir qué se necesita añadir o cambiar.]
+
+               ### 🛠️ Enfoque de solución sugerido
+               [Pasos concretos y ordenados para implementar la solución después, referenciando
+                funciones o variables específicas del código cuando sea posible]
+
+               ### 📊 Complejidad estimada
+               [baja / media / alta] — [justificación breve]
+
+               ### ❓ Información faltante
+               [Lista de datos, contexto o aclaraciones que se necesitarían para resolver el issue
+                de forma completa. Si el issue tiene suficiente información, escribe "Ninguna".]
+
+               ---
+               *Generado automáticamente por Claude. Este diagnóstico es una orientación inicial y puede
+               requerir revisión humana antes de implementar.*
