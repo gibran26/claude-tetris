@@ -14,6 +14,7 @@ jobs:
       !endsWith(github.actor, '[bot]')
 
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
       issues: write
@@ -31,9 +32,9 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
-          claude_args: >-
-            --allowed-tools
-            Bash(gh label list:*),Bash(gh label create:*),Bash(gh issue view:*),Bash(gh issue edit:*),Bash(gh issue comment:*)
+          # Bash sin restricción de subcomando: los permisos del workflow (issues: write)
+          # ya limitan qué puede hacer en GitHub. --max-turns acota el número de turnos.
+          claude_args: '--allowedTools Bash --max-turns 30'
 
           prompt: |
             Eres un asistente de triaje automático de issues para el repositorio de un juego de Tetris.
@@ -63,13 +64,11 @@ jobs:
                  "area:ui" (#06b6d4), "area:audio" (#ec4899).
                - IMPORTANTE: NO edites el título ni el cuerpo del issue (para evitar bucles de re-ejecución).
 
-            4. Publica un comentario de diagnóstico NUEVO en el issue (siempre crea uno nuevo para mantener
-               el historial completo). El comentario debe seguir exactamente esta estructura en español:
+            4. Publica un comentario de diagnóstico NUEVO en el issue para mantener el historial completo.
+               IMPORTANTE: escribe el cuerpo del comentario en un archivo temporal y usa --body-file
+               para evitar problemas de escapado de caracteres especiales en shell:
 
-               gh issue comment ${{ github.event.issue.number }} --body "CUERPO_DEL_COMENTARIO"
-
-               El cuerpo del comentario debe ser:
-
+               cat > /tmp/diagnosis.md << 'DIAGNOSIS_EOF'
                <!-- claude-issue-diagnosis -->
                🔎 **Diagnóstico automático de Claude** — disparado por `${{ github.event.action }}`
 
@@ -107,3 +106,6 @@ jobs:
                ---
                *Generado automáticamente por Claude. Este diagnóstico es una orientación inicial y puede
                requerir revisión humana antes de implementar.*
+               DIAGNOSIS_EOF
+
+               gh issue comment ${{ github.event.issue.number }} --body-file /tmp/diagnosis.md
