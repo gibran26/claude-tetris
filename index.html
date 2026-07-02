@@ -22,6 +22,16 @@
         </div>
 
         <div class="panel-section">
+          <span class="label">SKIN</span>
+          <select id="skin-select" aria-label="Seleccionar skin visual">
+            <option value="retro">Retro</option>
+            <option value="neon">Neon</option>
+            <option value="pastel">Pastel</option>
+            <option value="pixel">Pixel Art</option>
+          </select>
+        </div>
+
+        <div class="panel-section">
           <span class="label">SCORE</span>
           <span class="value" id="score">0</span>
         </div>
@@ -39,6 +49,18 @@
           <canvas id="next-canvas" width="120" height="120"></canvas>
         </div>
 
+        <div class="panel-section records-section">
+          <span class="label">RÉCORDS</span>
+          <div class="records-line">Mejor combo: <span id="best-combo-value">0</span></div>
+          <div class="records-line">Líneas máx.: <span id="best-lines-value">0</span></div>
+        </div>
+
+        <div class="panel-section highscore-section">
+          <span class="label">TOP 5</span>
+          <ol id="highscore-list" class="highscore-list"></ol>
+          <button id="reset-scores-btn" class="reset-scores-btn">Borrar récords</button>
+        </div>
+
         <div class="panel-section controls">
           <span class="label">CONTROLS</span>
           <ul>
@@ -46,7 +68,7 @@
             <li><kbd>↑</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
           </ul>
         </div>
       </aside>
@@ -56,7 +78,40 @@
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
+        <p id="overlay-stats" class="overlay-stats"></p>
+
+        <div id="highscore-entry" class="highscore-entry hidden">
+          <p class="highscore-entry-label">¡Nueva puntuación en el Top 5!</p>
+          <input type="text" id="player-name-input" maxlength="12" placeholder="Tu nombre" autocomplete="off" />
+          <button id="save-score-btn">Guardar</button>
+        </div>
+
+        <div id="overlay-highscores" class="overlay-highscores hidden">
+          <span class="label">TOP 5</span>
+          <ol id="overlay-highscore-list" class="highscore-list"></ol>
+          <button id="reset-scores-btn-overlay" class="reset-scores-btn">Borrar récords</button>
+        </div>
+
         <button id="restart-btn">Reiniciar</button>
+
+        <div id="pause-menu" class="pause-menu">
+          <button id="resume-btn">Reanudar</button>
+          <button id="pause-restart-btn">Reiniciar</button>
+          <button id="controls-btn">Ver controles</button>
+
+          <div class="level-select">
+            <label for="start-level-select">Nivel inicial</label>
+            <select id="start-level-select"></select>
+          </div>
+
+          <ul id="pause-controls-list" class="pause-controls hidden">
+            <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+            <li><kbd>↑</kbd> rotar</li>
+            <li><kbd>↓</kbd> bajar</li>
+            <li><kbd>Space</kbd> caída</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
+          </ul>
+        </div>
       </div>
     </div>
   </div>
