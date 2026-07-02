@@ -258,3 +258,83 @@ kbd {
 #restart-btn:hover {
   background: var(--restart-hover);
 }
+
+/* ---- Menú de pausa ---- */
+.pause-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.pause-menu button {
+  background: var(--restart-bg);
+  color: var(--restart-text);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 24px;
+  width: 170px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: background 0.15s;
+}
+
+.pause-menu button:hover {
+  background: var(--restart-hover);
+}
+
+.level-select {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.level-select label {
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--controls-color);
+  text-transform: uppercase;
+}
+
+.level-select select {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+.pause-controls {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.pause-controls li {
+  font-size: 12px;
+  color: var(--controls-color);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pause-controls.hidden {
+  display: none;
+}
+
+/* En pantalla de GAME OVER se oculta el menú de pausa;
+   en pantalla de PAUSA se oculta el botón de reinicio de game over. */
+#overlay.mode-gameover #pause-menu {
+  display: none;
+}
+
+#overlay.mode-pause #restart-btn {
+  display: none;
+}
