@@ -4,17 +4,6 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#64b5f6', // J - pale blue
-  '#ffb74d', // L - orange
-];
-
 const PIECES = [
   null,
   [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
@@ -32,13 +21,85 @@ const LINE_SCORES = [0, 100, 300, 500, 800];
 const BOMB_TYPE = 8;
 const BOMB_SPAWN_LINES = 2; // líneas eliminadas entre cada aparición de la Bomba
 const BOMB_BLAST_RADIUS = 1; // 1 = área de 3x3 (radio alrededor del centro)
-COLORS.push('#212121');
 PIECES.push([[BOMB_TYPE]]);
 
 const GRID_COLORS = {
   dark: '#22222e',
   light: '#d8d8e4',
 };
+
+// --- Skins visuales ---
+// Cada paleta tiene 9 posiciones: índice 0 = null, 1-7 = tipos de pieza, 8 = bomba.
+const SKIN_PALETTES = {
+  retro: [
+    null,
+    '#4dd0e1', // I - cyan
+    '#ffd54f', // O - yellow
+    '#ba68c8', // T - purple
+    '#81c784', // S - green
+    '#e57373', // Z - red
+    '#64b5f6', // J - pale blue
+    '#ffb74d', // L - orange
+    '#212121', // bomba
+  ],
+  neon: [
+    null,
+    '#00e5ff',
+    '#faff00',
+    '#e040fb',
+    '#39ff14',
+    '#ff1744',
+    '#2979ff',
+    '#ff6d00',
+    '#ff3d00', // bomba
+  ],
+  pastel: [
+    null,
+    '#a8d8ea',
+    '#fff1a8',
+    '#d8b4e2',
+    '#b8e0b0',
+    '#f4a9a8',
+    '#a8c5e8',
+    '#f5c99b',
+    '#c9a8d8', // bomba
+  ],
+  pixel: [
+    null,
+    '#4dd0e1',
+    '#ffd54f',
+    '#ba68c8',
+    '#81c784',
+    '#e57373',
+    '#64b5f6',
+    '#ffb74d',
+    '#212121', // bomba
+  ],
+};
+const VALID_SKINS = Object.keys(SKIN_PALETTES);
+const SKIN_STORAGE_KEY = 'tetris-skin';
+
+function loadSkin() {
+  try {
+    const stored = localStorage.getItem(SKIN_STORAGE_KEY);
+    if (stored && VALID_SKINS.includes(stored)) return stored;
+  } catch (e) {
+    // localStorage no disponible (modo privado, etc.) — se usa el valor por defecto
+  }
+  return 'retro';
+}
+
+function saveSkin(value) {
+  try {
+    localStorage.setItem(SKIN_STORAGE_KEY, value);
+  } catch (e) {
+    // ignorar si localStorage no está disponible
+  }
+}
+
+function currentPalette() {
+  return SKIN_PALETTES[skin] || SKIN_PALETTES.retro;
+}
 
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
@@ -80,9 +141,12 @@ const HIGHSCORES_KEY = 'tetris-highscores';
 // Mejor combo y líneas máximas conseguidas alguna vez: { bestCombo: number, bestLines: number }
 const STATS_KEY = 'tetris-stats';
 
+const skinSelect = document.getElementById('skin-select');
+
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let linesSinceBomb, bombPending;
 let theme = 'dark';
+let skin = loadSkin();
 let comboCount, maxComboThisGame;
 let bestCombo, bestLines;
 let highScores = [];
@@ -377,7 +441,24 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
     drawBombBlock(context, x, y, size, alpha);
     return;
   }
-  const color = COLORS[colorIndex];
+  switch (skin) {
+    case 'neon':
+      drawBlockNeon(context, x, y, colorIndex, size, alpha);
+      break;
+    case 'pastel':
+      drawBlockPastel(context, x, y, colorIndex, size, alpha);
+      break;
+    case 'pixel':
+      drawBlockPixel(context, x, y, colorIndex, size, alpha);
+      break;
+    default:
+      drawBlockRetro(context, x, y, colorIndex, size, alpha);
+      break;
+  }
+}
+
+function drawBlockRetro(context, x, y, colorIndex, size, alpha) {
+  const color = currentPalette()[colorIndex];
   context.globalAlpha = alpha ?? 1;
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
@@ -387,11 +468,69 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.globalAlpha = 1;
 }
 
+function drawBlockNeon(context, x, y, colorIndex, size, alpha) {
+  const color = currentPalette()[colorIndex];
+  const px = x * size + 2, py = y * size + 2, s = size - 4;
+  context.globalAlpha = alpha ?? 1;
+  context.save();
+  context.shadowBlur = 10;
+  context.shadowColor = color;
+  context.fillStyle = 'rgba(10,10,20,0.85)';
+  context.fillRect(px, py, s, s);
+  context.strokeStyle = color;
+  context.lineWidth = 2;
+  context.strokeRect(px, py, s, s);
+  context.restore();
+  context.globalAlpha = 1;
+}
+
+function drawBlockPastel(context, x, y, colorIndex, size, alpha) {
+  const color = currentPalette()[colorIndex];
+  const px = x * size + 2, py = y * size + 2, w = size - 4, h = size - 4;
+  const radius = Math.min(6, w / 2, h / 2);
+  context.globalAlpha = alpha ?? 1;
+  context.fillStyle = color;
+  context.beginPath();
+  if (typeof context.roundRect === 'function') {
+    context.roundRect(px, py, w, h, radius);
+  } else {
+    context.moveTo(px + radius, py);
+    context.arcTo(px + w, py, px + w, py + h, radius);
+    context.arcTo(px + w, py + h, px, py + h, radius);
+    context.arcTo(px, py + h, px, py, radius);
+    context.arcTo(px, py, px + w, py, radius);
+    context.closePath();
+  }
+  context.fill();
+  context.globalAlpha = 1;
+}
+
+function drawBlockPixel(context, x, y, colorIndex, size, alpha) {
+  const color = currentPalette()[colorIndex];
+  const px = x * size + 1, py = y * size + 1, s = size - 2;
+  context.globalAlpha = alpha ?? 1;
+  context.fillStyle = color;
+  context.fillRect(px, py, s, s);
+  // patrón de dithering: cuadrícula fina en tablero de ajedrez
+  const cell = Math.max(2, Math.floor(s / 6));
+  context.fillStyle = 'rgba(0,0,0,0.18)';
+  for (let gy = 0; gy < s; gy += cell) {
+    for (let gx = ((gy / cell) % 2 === 0) ? 0 : cell; gx < s; gx += cell * 2) {
+      context.fillRect(px + gx, py + gy, cell, cell);
+    }
+  }
+  context.strokeStyle = 'rgba(0,0,0,0.35)';
+  context.lineWidth = 1;
+  context.strokeRect(px + 0.5, py + 0.5, s - 1, s - 1);
+  context.globalAlpha = 1;
+}
+
 function drawBombBlock(context, x, y, size, alpha) {
   const cx = x * size + size / 2;
   const cy = y * size + size / 2;
+  const bombColor = currentPalette()[BOMB_TYPE];
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = COLORS[BOMB_TYPE];
+  context.fillStyle = bombColor;
   context.beginPath();
   context.arc(cx, cy, size / 2 - 3, 0, Math.PI * 2);
   context.fill();
@@ -633,5 +772,13 @@ highScores = loadHighScores();
 const initialStats = loadStats();
 bestCombo = initialStats.bestCombo;
 bestLines = initialStats.bestLines;
+
+skinSelect.value = skin;
+skinSelect.addEventListener('change', () => {
+  skin = VALID_SKINS.includes(skinSelect.value) ? skinSelect.value : 'retro';
+  saveSkin(skin);
+  draw();
+  drawNext();
+});
 
 init();
