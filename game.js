@@ -143,7 +143,7 @@ const STATS_KEY = 'tetris-stats';
 
 const skinSelect = document.getElementById('skin-select');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let board, current, next, score, lines, level, startLevel, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let linesSinceBomb, bombPending;
 let theme = 'dark';
 let skin = loadSkin();
@@ -364,7 +364,7 @@ function clearLines() {
   if (cleared) {
     lines += cleared;
     score += (LINE_SCORES[cleared] || 0) * level;
-    level = Math.floor(lines / 10) + 1;
+    level = startLevel + Math.floor(lines / 10);
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
     linesSinceBomb += cleared;
     if (linesSinceBomb >= BOMB_SPAWN_LINES) {
@@ -687,8 +687,9 @@ function init() {
   board = createBoard();
   score = 0;
   lines = 0;
-  level = getSelectedStartLevel();
-  saveStartLevel(level);
+  startLevel = getSelectedStartLevel();
+  level = startLevel;
+  saveStartLevel(startLevel);
   paused = false;
   gameOver = false;
   dropInterval = Math.max(100, 1000 - (level - 1) * 90);
